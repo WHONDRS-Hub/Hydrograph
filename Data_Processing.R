@@ -65,7 +65,7 @@ discharge_CAN$datetime <- as.POSIXct(strptime(discharge_CAN$datetime, "%Y-%m-%d 
 attr(discharge_CAN$datetime,"tzone") <- "America/New_York"
 discharge_CAN$datetime <- with_tz(discharge_CAN$datetime, "UTC")
 
-###load CANADA water office gauge ht data####
+###load CANADA water office PST gauge ht data####
 setwd('C:\\Users\\mcgr323\\projects\\Hydrograph\\water_office_CANADA\\gauge_level\\PST')#set working dir
 file_list <- list.files(path='C:\\Users\\mcgr323\\projects\\Hydrograph\\water_office_CANADA\\gauge_level\\PST') #create list of files
 gauge_CAN <- data.frame() #create empty data frame for for loop
@@ -77,27 +77,51 @@ for (i in 1:length(file_list)){
   gauge_CAN <- rbind(gauge_CAN, temp_data) #for each iteration, bind the new data to the building dataset
 }
 
-
+#change date time format to UTC
+gauge_CAN <- within(gauge_CAN, rm(Parameter)) #remove "Parameter" field
+gauge_CAN <- gauge_CAN %>% #rename columns to match NEON and USGS format 
+  rename("Gauge_height_m" = "Value (m)",
+         "datetime"= "Date (PST)")
 
 gauge_CAN$site_no <- NA #site number (not S19S number)
 gauge_CAN$tz_cd <- "PST" #time zone 
 
 #change date time format to UTC
-gauge_CAN$datetime <- as.POSIXct(strptime(gauge_CAN$datetime, "%Y-%m-%d %H:%M:%S", tz = "ETC/GMT+7"))
+gauge_CAN$datetime <- as.POSIXct(strptime(gauge_CAN$datetime, "%m/%d/%Y %H:%M", tz = "ETC/GMT+8"))
 attr(gauge_CAN$datetime,"tzone") <- "America/San_Francisco"
 gauge_CAN$datetime <- with_tz(gauge_CAN$datetime, "UTC")
 
+gauge_CAN_PST <- gauge_CAN
+
+###load CANADA water office CST gauge ht data####
 setwd('C:\\Users\\mcgr323\\projects\\Hydrograph\\water_office_CANADA\\gauge_level\\CST')#set working dir
-file_list <- list.files(path='C:\\Users\\mcgr323\\projects\\Hydrograph\\water_office_CANADA\\gauge_level\\PST') #create list of files
+file_list <- list.files(path='C:\\Users\\mcgr323\\projects\\Hydrograph\\water_office_CANADA\\gauge_level\\CST') #create list of files
 gauge_CAN <- data.frame() #create empty data frame for for loop
 
 for (i in 1:length(file_list)){
-  temp_data <- read_csv(file_list[i], skip = 10) #each file will be read in, specify which columns you need read in to avoid any errors
+  temp_data <- read_csv(file_list[i], skip = 9) #each file will be read in, specify which columns you need read in to avoid any errors
   temp_data$agency_cd <- sapply(strsplit(gsub(".csv", "", file_list[i]), "_"), function(x){x[4]}) #create agency column 
   temp_data$site <- sapply(strsplit(gsub(".csv", "", file_list[i]), "_"), function(x){x[5]}) #creating a new column that indicates site
   gauge_CAN <- rbind(gauge_CAN, temp_data) #for each iteration, bind the new data to the building dataset
 }
 
+#change date time format to UTC
+gauge_CAN <- within(gauge_CAN, rm(Parameter)) #remove "Parameter" field
+gauge_CAN <- gauge_CAN %>% #rename columns to match NEON and USGS format 
+  rename("Gauge_height_m" = "Value (m)",
+         "datetime"= "Date (CST)")
+
+gauge_CAN$site_no <- NA #site number (not S19S number)
+gauge_CAN$tz_cd <- "CST" #time zone 
+
+#change date time format to UTC
+gauge_CAN$datetime <- as.POSIXct(strptime(gauge_CAN$datetime, "%Y-%m-%d %H:%M:%S", tz = "ETC/GMT+7"))
+attr(gauge_CAN$datetime,"tzone") <- "America/Denver"
+gauge_CAN$datetime <- with_tz(gauge_CAN$datetime, "UTC")
+
+gauge_CAN_CST <- gauge_CAN
+
+gauge_CAN <- rbind(gauge_CAN_CST, gauge_CAN_PST)
 
 ###read in other files###
 setwd('C:\\Users\\mcgr323\\projects\\Hydrograph\\Other')
